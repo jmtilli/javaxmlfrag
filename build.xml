@@ -1,0 +1,124 @@
+<!--
+  Copyright (C) 2013 Juha-Matti Tilli
+  
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+  
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+-->
+<project name="javaxmlfrag" default="dist" basedir=".">
+    <description>
+      Java XML fragment parser package build file
+    </description>
+  <!-- set global properties for this build -->
+  <!-- we can't use location here since it appears not to work in include names -->
+  <property name="src" value="javasrc"/>
+  <property name="doc" value="javadoc"/>
+  <!--<property name="build" location="build"/>-->
+  <!--<property name="dist"  location="dist"/>-->
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <!-- <mkdir dir="${build}"/> -->
+    <mkdir dir="${doc}"/>
+  </target>
+
+  <patternset id="srcdoc">
+    <include name="${doc}/**/*"/>
+  </patternset>
+
+  <patternset id="src">
+    <include name="${src}/**/*.java"/>
+  </patternset>
+
+  <patternset id="build">
+    <include name="build.xml"/>
+  </patternset>
+
+  <target name="compile" depends="init" description="compile the source " >
+    <!-- Compile the java code from ${src} into ${build} -->
+    <!-- <javac srcdir="${src}" destdir="${build}"/> -->
+    <!-- <javac srcdir="." destdir="." /> -->
+    <javac srcdir="${src}" debug="on" source="1.5">
+      <!--<classpath refid="classpath"/>-->
+    </javac>
+  </target>
+
+  <target name="jar" depends="compile" description="jar">
+      <jar destfile="javaxmlfrag.jar">
+          <fileset dir="${src}">
+              <!--<include name="**/*.class"/>-->
+              <include name="**/*.class"/>
+          </fileset>
+          <!--
+          <manifest>
+          </manifest>
+          -->
+      </jar>
+  </target>
+
+  <target name="javadoc" depends="compile" description="javadoc">
+      <javadoc packagenames="fi.iki.jmtilli.javaxmlfrag.*" sourcepath="${src}" destdir="${doc}" />
+  </target>
+
+  <target name="bindist" depends="jar,javadoc" description="make distfile">
+      <zip destfile="javaxmlfrag-bin.zip">
+          <zipfileset dir="." prefix="javaxmlfrag-bin">
+              <patternset>
+                  <include name="javaxmlfrag.jar" />
+              </patternset>
+              <patternset refid="srcdoc" />
+          </zipfileset>
+      </zip>
+  </target>
+
+  <target name="srcdist" depends="jar,javadoc" description="make distfile">
+      <zip destfile="javaxmlfrag-src.zip">
+          <zipfileset dir="." prefix="javaxmlfrag-src">
+              <patternset refid="src" />
+              <patternset refid="srcdoc" />
+              <patternset refid="build" />
+          </zipfileset>
+      </zip>
+  </target>
+
+  <target name="clean" description="clean up" >
+    <delete>
+        <fileset dir="${src}" includes="**/*.class"/>
+    </delete>
+    <delete dir="${doc}" />
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <!-- <delete dir="${build}"/> -->
+    <!-- <delete dir="${dist}"/> -->
+  </target>
+
+  <target name="dist" depends="srcdist,bindist" description="make distfiles" />
+
+  <target name="distclean" depends="clean" description="clean up distributions" >
+    <delete>
+        <fileset dir=".">
+            <include name="javaxmlfrag-src.zip" />
+            <include name="javaxmlfrag-bin.zip" />
+            <include name="javaxmlfrag.jar" />
+        </fileset>
+    </delete>
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <!-- <delete dir="${build}"/> -->
+    <!-- <delete dir="${dist}"/> -->
+  </target>
+</project>

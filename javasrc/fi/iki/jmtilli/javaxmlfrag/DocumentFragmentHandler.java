@@ -24,6 +24,12 @@ import java.util.*;
 import java.io.*;
 import javax.xml.parsers.*;
 import org.xml.sax.*;
+/**
+   Handler that is able to collect document fragments into DocumentFragment.
+
+   Like DefaultHandler in SAX, but with the ability to collect parts of the
+   document to a tree during parsing.
+ */
 public abstract class DocumentFragmentHandler
   extends org.xml.sax.helpers.DefaultHandler
 {

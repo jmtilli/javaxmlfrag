@@ -20,6 +20,11 @@
   SOFTWARE.
  */
 package fi.iki.jmtilli.javaxmlfrag;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Document;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
 import java.util.*;
 /**
    Unit test for DocumentFragment.
@@ -121,7 +126,7 @@ public class UnitTestDocumentFragment {
 
     thrown = false;
     try {
-      txt.setAttr("attr", "val");
+      txt.setAttrString("attr", "val");
     }
     catch (IllegalStateException ex)
     {
@@ -131,7 +136,7 @@ public class UnitTestDocumentFragment {
 
     thrown = false;
     try {
-      txt.addChild(new DocumentFragment("tag"));
+      txt.add(new DocumentFragment("tag"));
     }
     catch (IllegalStateException ex)
     {
@@ -263,7 +268,7 @@ public class UnitTestDocumentFragment {
     children.add(frag4);
     for (DocumentFragment child: children)
     {
-      frag1.addChild(child);
+      frag1.add(child);
     }
     assertMapEqual(frag1.getAttributes(), attributes);
     assertListHasSameObjects(frag1.getChildren(), children);
@@ -272,7 +277,7 @@ public class UnitTestDocumentFragment {
     attributes.put("attr3", "5.0");
     for (Map.Entry<String, String> e: attributes.entrySet())
     {
-      frag1.setAttr(e.getKey(), e.getValue());
+      frag1.setAttrString(e.getKey(), e.getValue());
     }
     assertMapEqual(frag1.getAttributes(), attributes);
     assertListHasSameObjects(frag1.getChildren(), children);
@@ -292,7 +297,7 @@ public class UnitTestDocumentFragment {
     try {
       frag1.getAttrStringNotNull("attr4");
     }
-    catch (NullPointerException ex)
+    catch (XMLValueMissingException ex)
     {
       thrown = true;
     }
@@ -336,7 +341,7 @@ public class UnitTestDocumentFragment {
     try {
       frag1.getAttrDoubleNotNull("attr4");
     }
-    catch (NullPointerException ex)
+    catch (XMLValueMissingException ex)
     {
       thrown = true;
     }
@@ -354,7 +359,7 @@ public class UnitTestDocumentFragment {
     try {
       frag1.getStringNotNull("frag1");
     }
-    catch (NullPointerException ex)
+    catch (XMLValueMissingException ex)
     {
       thrown = true;
     }
@@ -364,14 +369,14 @@ public class UnitTestDocumentFragment {
     assertEqual(frag1.getStringNotNull("frag4"), "bar");
 
     children.add(frag4_2);
-    frag1.addChild(frag4_2);
+    frag1.add(frag4_2);
     assertListHasSameObjects(frag1.getChildren(), children);
     assertEqual(frag1.getString("frag1", "foo"), "foo");
     thrown = false;
     try {
       frag1.getStringObject("frag4");
     }
-    catch (XMLException ex)
+    catch (XMLMultipleElementsException ex)
     {
       thrown = true;
     }
@@ -379,7 +384,7 @@ public class UnitTestDocumentFragment {
     try {
       frag1.get("frag4");
     }
-    catch (XMLException ex)
+    catch (XMLMultipleElementsException ex)
     {
       thrown = true;
     }
@@ -388,12 +393,333 @@ public class UnitTestDocumentFragment {
     assertEqual(frag1.get("frag1"), null);
   }
 
+  private static void testConvertToDomNode() throws Throwable
+  {
+    DocumentFragment frag = new DocumentFragment("frag");
+    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    Node n, first, second, one, two;
+    NodeList children_n;
+    NodeList children_first;
+    NodeList children_second;
+    frag.setAttrString("attr", "val");
+    frag.setInt("first", 1);
+    frag.setDouble("second", 2.0);
+    doc.appendChild(n = frag.convertToDomNode(doc));
+    assertEqual(n.getNodeType(), Node.ELEMENT_NODE);
+    assertEqual(n.getNodeName(), "frag");
+    children_n = n.getChildNodes();
+    assertEqual(children_n.getLength(), 2);
+    first = children_n.item(0);
+    assertEqual(first.getNodeType(), Node.ELEMENT_NODE);
+    assertEqual(first.getNodeName(), "first");
+    second = children_n.item(1);
+    assertEqual(second.getNodeType(), Node.ELEMENT_NODE);
+    assertEqual(second.getNodeName(), "second");
+    children_first = first.getChildNodes();
+    children_second = second.getChildNodes();
+    assertEqual(children_first.getLength(), 1);
+    assertEqual(children_second.getLength(), 1);
+    one = children_first.item(0);
+    two = children_second.item(0);
+    assertEqual(one.getNodeType(), Node.TEXT_NODE);
+    assertEqual(two.getNodeType(), Node.TEXT_NODE);
+    assertEqual(one.getNodeValue(), "1");
+    assertEqual(two.getNodeValue(), "2.0");
+  }
+
+  private static void testRemove()
+  {
+    DocumentFragment frag = new DocumentFragment("frag");
+    boolean thrown;
+    assertEqual(frag.getChildren().size(), 0);
+    frag.add("first");
+    assertEqual(frag.getChildren().size(), 1);
+    frag.add("second");
+    assertEqual(frag.getChildren().size(), 2);
+    frag.add("second");
+    assertEqual(frag.getChildren().size(), 3);
+    frag.add("third");
+    assertEqual(frag.getChildren().size(), 4);
+    frag.add("third");
+    assertEqual(frag.getChildren().size(), 5);
+    frag.add("third");
+    assertEqual(frag.getChildren().size(), 6);
+    assertEqual(frag.removeAll().size(), 6);
+    assertEqual(frag.getChildren().size(), 0);
+    frag.add("first");
+    assertEqual(frag.getChildren().size(), 1);
+    frag.add("second");
+    assertEqual(frag.getChildren().size(), 2);
+    frag.add("second");
+    assertEqual(frag.getChildren().size(), 3);
+    frag.add("third");
+    assertEqual(frag.getChildren().size(), 4);
+    frag.add("third");
+    assertEqual(frag.getChildren().size(), 5);
+    frag.add("third");
+    assertEqual(frag.getChildren().size(), 6);
+    assertTrue(frag.remove("first") != null);
+    assertEqual(frag.getChildren().size(), 5);
+    thrown = false;
+    try {
+      frag.remove("second");
+    }
+    catch (XMLMultipleElementsException e)
+    {
+      thrown = true;
+    }
+    assertTrue(thrown);
+    assertEqual(frag.getChildren().size(), 5);
+    thrown = false;
+    try {
+      frag.remove("third");
+    }
+    catch (XMLMultipleElementsException e)
+    {
+      thrown = true;
+    }
+    assertTrue(thrown);
+    assertEqual(frag.getChildren().size(), 5);
+    frag.add("first");
+    assertEqual(frag.getChildren().size(), 6);
+    assertEqual(frag.removeMulti("first").size(), 1);
+    assertEqual(frag.getChildren().size(), 5);
+    assertEqual(frag.removeMulti("second").size(), 2);
+    assertEqual(frag.getChildren().size(), 3);
+    assertEqual(frag.removeMulti("third").size(), 3);
+    assertEqual(frag.getChildren().size(), 0);
+
+  }
+
+  private static void testGetNonTextChildren()
+  {
+    DocumentFragment frag1 = new DocumentFragment("frag1");
+    assertEqual(frag1.getNonTextChildren().size(), 0);
+    frag1.addTextChild("a");
+    assertEqual(frag1.getNonTextChildren().size(), 0);
+    frag1.add("b");
+    assertEqual(frag1.getNonTextChildren().size(), 1);
+    frag1.add("c");
+    assertEqual(frag1.getNonTextChildren().size(), 2);
+    frag1.addTextChild("d");
+    assertEqual(frag1.getNonTextChildren().size(), 2);
+  }
+
+  private static void testRemoveAttr()
+  {
+    DocumentFragment frag = new DocumentFragment("frag");
+    boolean thrown;
+    thrown = false;
+    try {
+      frag.removeAttr(null);
+    }
+    catch(NullPointerException ex)
+    {
+      thrown = true;
+    }
+    frag.removeAttr("foo");
+    frag.setAttrString("unrelated", "unrelated");
+    frag.setAttrString("foo", "bar");
+    assertEqual(frag.getAttrStringObject("unrelated"), "unrelated");
+    assertEqual(frag.getAttrStringObject("foo"), "bar");
+    frag.removeAttr("foo");
+    assertEqual(frag.getAttrStringObject("unrelated"), "unrelated");
+    assertEqual(frag.getAttrStringObject("foo"), null);
+  }
+
+  private static void testSetAttrTypeConv()
+  {
+    DocumentFragment frag = new DocumentFragment("frag");
+    frag.setAttrString("first", "foo");
+    frag.setAttrDouble("second", 1.7);
+    frag.setAttrInt("third", -5);
+    assertEqual(frag.getAttrStringObject("first"), "foo");
+    assertEqual(frag.getAttrStringObject("second"), "1.7");
+    assertEqual(frag.getAttrStringObject("third"), "-5");
+    frag.setAttrStringObject("first", null);
+    frag.setAttrDoubleObject("second", null);
+    frag.setAttrIntObject("third", null);
+    assertEqual(frag.getAttrStringObject("first"), null);
+    assertEqual(frag.getAttrStringObject("second"), null);
+    assertEqual(frag.getAttrStringObject("third"), null);
+  }
+
+  private static void testThisVsNonThisGetNullness()
+  {
+    DocumentFragment frag = new DocumentFragment("frag");
+    boolean thrown;
+    frag.setString("first", ""); // adds element with empty content
+    frag.setStringObject("second", null); // removes nonexistent element
+    assertEqual(frag.get("second"), null);
+    assertEqual(frag.getIntObject("second"), null);
+    thrown = false;
+    try {
+      frag.getIntObject("first");
+    }
+    catch(NumberFormatException ex)
+    {
+      thrown = true;
+    }
+    assertTrue(thrown);
+    assertEqual(frag.get("first").getThisIntObject(), null);
+  }
+
+  private static void testSetAttrNull()
+  {
+    DocumentFragment frag = new DocumentFragment("frag");
+    boolean thrown;
+    thrown = false;
+    try {
+      frag.setAttrString(null, "foo");
+    }
+    catch(NullPointerException e)
+    {
+      thrown = true;
+    }
+    assertTrue(thrown);
+    thrown = false;
+    try {
+      frag.setAttrString("foo", null);
+    }
+    catch(NullPointerException e)
+    {
+      thrown = true;
+    }
+    assertTrue(thrown);
+    frag.setAttrStringObject("foo", null);
+    assertEqual(frag.getAttributes().size(), 0);
+  }
+
+  private static void testAddSet()
+  {
+    DocumentFragment frag1 = new DocumentFragment("frag1");
+    DocumentFragment a;
+    boolean thrown;
+
+    assertEqual(frag1.getNonTextChildren().size(), 0);
+    a = frag1.add("a");
+    assertEqual(frag1.getNonTextChildren().size(), 1);
+    assertTrue(frag1.set("a") == a);
+    assertEqual(frag1.getNonTextChildren().size(), 1);
+    assertTrue(frag1.set("b") != a);
+    assertEqual(frag1.getNonTextChildren().size(), 2);
+    assertTrue(frag1.add("a") != a);
+    assertEqual(frag1.getNonTextChildren().size(), 3);
+    thrown = false;
+    try {
+      // throws because there are multiple "a" elements
+      frag1.set("a");
+    }
+    catch(XMLMultipleElementsException e)
+    {
+      thrown = true;
+    }
+    assertTrue(thrown);
+    // Test that "set" clears the element
+    frag1.set("b").setInt("a", 5);
+    frag1.set("b").setInt("b", 6);
+    frag1.set("b").setInt("c", 7);
+    assertEqual(frag1.get("b").getIntObject("a"), null);
+    assertEqual(frag1.get("b").getIntObject("b"), null);
+    assertEqual(frag1.get("b").getIntObject("c"), 7);
+    frag1.getOrCreate("b").setInt("a", 5);
+    frag1.getOrCreate("b").setInt("b", 6);
+    frag1.getOrCreate("b").setInt("c", 7);
+    assertEqual(frag1.get("b").getIntObject("a"), 5);
+    assertEqual(frag1.get("b").getIntObject("b"), 6);
+    assertEqual(frag1.get("b").getIntObject("c"), 7);
+  }
+
+  private static class Complex implements XMLRowable {
+    public double re;
+    public double im;
+    public Complex(double re, double im)
+    {
+      this.re = re;
+      this.im = im;
+    }
+    public void toXMLRow(DocumentFragment frag)
+    {
+      frag.setDouble("re", this.re);
+      frag.setDouble("im", this.im);
+    }
+  };
+
+  public static void testRowable()
+  {
+    DocumentFragment frag = new DocumentFragment("frag");
+    boolean thrown = false;
+
+    frag.setRow("complex", new Complex(2.0, -3.0));
+    assertEqual(frag.getChildren().size(), 1);
+    assertEqual(frag.get("complex").getChildren().size(), 2);
+    assertEqual(frag.get("complex").getDoubleNotNull("re"), 2.0);
+    assertEqual(frag.get("complex").getDoubleNotNull("im"), -3.0);
+
+    thrown = false;
+    try {
+      frag.setRow("complex", null);
+    }
+    catch (NullPointerException e)
+    {
+      thrown = true;
+    }
+    assertTrue(thrown);
+    assertEqual(frag.getChildren().size(), 1);
+    assertEqual(frag.get("complex").getChildren().size(), 2);
+    assertEqual(frag.get("complex").getDoubleNotNull("re"), 2.0);
+    assertEqual(frag.get("complex").getDoubleNotNull("im"), -3.0);
+
+    frag.set("complex").setThisRow(new Complex(2.0, -3.0));
+    assertEqual(frag.getChildren().size(), 1);
+    assertEqual(frag.get("complex").getChildren().size(), 2);
+    assertEqual(frag.get("complex").getDoubleNotNull("re"), 2.0);
+    assertEqual(frag.get("complex").getDoubleNotNull("im"), -3.0);
+
+    thrown = false;
+    try {
+      frag.set("complex").setThisRow(null);
+    }
+    catch (NullPointerException e)
+    {
+      thrown = true;
+    }
+    assertTrue(thrown);
+    assertEqual(frag.getChildren().size(), 1);
+    assertEqual(frag.get("complex").getChildren().size(), 0);
+
+    frag.set("complex").setThisRow(new Complex(2.0, -3.0));
+    assertEqual(frag.getChildren().size(), 1);
+    assertEqual(frag.get("complex").getChildren().size(), 2);
+    assertEqual(frag.get("complex").getDoubleNotNull("re"), 2.0);
+    assertEqual(frag.get("complex").getDoubleNotNull("im"), -3.0);
+    frag.setRowObject("complex", null);
+    assertEqual(frag.getChildren().size(), 0);
+
+    frag.set("complex").setThisRow(new Complex(2.0, -3.0));
+    assertEqual(frag.getChildren().size(), 1);
+    assertEqual(frag.get("complex").getChildren().size(), 2);
+    assertEqual(frag.get("complex").getDoubleNotNull("re"), 2.0);
+    assertEqual(frag.get("complex").getDoubleNotNull("im"), -3.0);
+    frag.set("complex").setThisRowObject(null);
+    assertEqual(frag.getChildren().size(), 1);
+    assertEqual(frag.get("complex").getChildren().size(), 0);
+  }
+
   /**
      Run the unit test
    */
-  public static void main(String[] args)
+  public static void main(String[] args) throws Throwable
   {
     testTextFragment();
     testTagFragment();
+    testConvertToDomNode();
+    testGetNonTextChildren();
+    testAddSet();
+    testRemoveAttr();
+    testSetAttrTypeConv();
+    testThisVsNonThisGetNullness();
+    testSetAttrNull();
+    testRemove();
   }
 };

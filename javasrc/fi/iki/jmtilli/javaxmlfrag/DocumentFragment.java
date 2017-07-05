@@ -722,6 +722,41 @@ public class DocumentFragment {
     return f;
   }
   /**
+     Get the only child with the specified tag, asserting it is non-null.
+
+     If there are multiple children with the specified tag, throws an
+     exception.
+
+     If there is no child with the specified tag, throws an exception.
+
+     @param tag The specified tag
+     @return The child with the specified tag
+   */
+  public DocumentFragment getNotNull(String tag)
+  {
+    DocumentFragment f = get(tag);
+    if (f == null)
+    {
+      throw new XMLException("no such tag: " + tag);
+    }
+    return f;
+  }
+  /**
+     Assert that the tag name is the specified.
+
+     If the tag name differs, throws an exception.
+
+     @param tag The specified tag name
+   */
+  public void assertTag(String tag)
+  {
+    if (!tag.equals(this.tag))
+    {
+      throw new XMLException("tag name expected: " + tag +
+                             ", actual: " + this.tag);
+    }
+  }
+  /**
      Remove and get a list of all children
 
      @return The list of children with the specified tag

@@ -87,6 +87,7 @@ public class DocumentFragment {
     tf = TransformerFactory.newInstance();
     t = tf.newTransformer();
     t.setOutputProperty(OutputKeys.INDENT, "yes");
+    t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
     t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION,
                         document_type.getOmitXmlDeclaration());
     doc.appendChild(convertToDomNode(doc));

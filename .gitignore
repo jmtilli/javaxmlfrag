@@ -1,0 +1,5 @@
+*.class
+/javadoc/
+/javaxmlfrag-bin.zip
+/javaxmlfrag-src.zip
+/javaxmlfrag.jar

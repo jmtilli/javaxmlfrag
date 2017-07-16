@@ -98,7 +98,7 @@ public abstract class DocumentFragmentHandler
         {
           frags.get(frags.size()-1).addTextChild(buf.toString());
         }
-        frags.get(frags.size()-1).addChild(df);
+        frags.get(frags.size()-1).add(df);
       }
       buf.setLength(0);
       frags.add(df);

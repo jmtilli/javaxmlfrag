@@ -332,7 +332,7 @@ public class UnitTestDocumentFragmentHandler {
 
     head = new DocumentFragment("head");
     title = new DocumentFragment("title");
-    head.addChild(title);
+    head.add(title);
     title.addTextChild("foo");
     nextEvent = new XmlEndEvent("", "", "head", head, is);
     testh.endElement("", "", "head");
@@ -351,8 +351,8 @@ public class UnitTestDocumentFragmentHandler {
   private static void testParseWhole() throws Throwable
   {
     DocumentFragment tag = new DocumentFragment("tag");
-    tag.setAttr("attr1", "foo");
-    tag.setAttr("attr2", "bar");
+    tag.setAttrString("attr1", "foo");
+    tag.setAttrString("attr2", "bar");
     InputStream is = new ByteArrayInputStream(
         "<tag attr1='foo' attr2='bar'></tag>".getBytes("UTF-8"));
     DocumentFragment tag_parsed = DocumentFragmentHandler.parseWhole(is);
